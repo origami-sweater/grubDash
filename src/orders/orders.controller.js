@@ -46,6 +46,27 @@ function mobileNumberIsValid(req, res, next){
     };
 }
 
+
+function statusIsValid(req, res, next){
+    const { data: { status } = {} } = req.body;
+    const validStatuses = ["pending", "preparing", "out-for-delivery", "deliverd"];
+    if (status && validStatuses.includes(status)){
+        if (status == "delivered"){
+            next({
+                status: 400,
+                message: "Delivered orders cannot be updated."
+            });
+        } else {
+            next();
+        };
+    } else {
+        next({
+            status: 400,
+            message: "Order must have a status of pending, preparing, out-for-delivery, delivered"
+        });
+    };
+}
+
 //checks for an array of dishes
 function dishesExist(req, res, next){
     const { data: { dishes } = {} } = req.body;
@@ -79,9 +100,21 @@ function dishesHaveQuantity(req, res, next){
     next();
 }
 
-/*function statusIsValid(req, res, next){
-    const { data: { status } = {} } = req.body;
-}*/
+//checks that order id of request matches the route id
+function orderIdsMatch(req, res, next){
+    const reqId = req.body.data.id;
+    const routeId = req.params.orderId;
+    if (reqId && reqId != routeId){
+          next({
+              status: 400,
+              message: `Order id does not match route id. Dish: ${reqId}, Route: ${routeId}`
+          });
+      } else {
+        next();
+      };
+  }
+
+
 
 //API handler functions
 //list - lists all orders
@@ -108,9 +141,27 @@ function read(req, res){
     res.json({data: res.locals.order});
 }
 
+//update - updates order
+function update(req, res, next){
+    let { data: { id, deliverTo, mobileNumber, status, dishes  } = {} } = req.body;
+    const ogOrder = res.locals.order;
+    const ogDishes = ogOrder.dishes;
+    req.body.data.id = ogOrder.id;
+    res.json({ data: req.body.data });
+}
+
 module.exports = {
     list,
     create: [deliverToIsValid, mobileNumberIsValid, dishesExist, dishesHaveQuantity, create],
-    read: [orderExists, read],
-    //update: [update],
+    read: [orderExists, read], 
+    update: [
+        orderExists, 
+        orderIdsMatch, 
+        deliverToIsValid, 
+        mobileNumberIsValid, 
+        dishesExist, 
+        dishesHaveQuantity, 
+        statusIsValid,
+        update
+    ],
 }
