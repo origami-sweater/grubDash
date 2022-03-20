@@ -114,7 +114,17 @@ function orderIdsMatch(req, res, next){
       };
   }
 
-
+//checks that status is pending for the destroy function
+function statusIsPending(req, res, next){
+    if (res.locals.order.status == "pending"){
+        next();
+    } else {
+        next({
+            status: 400,
+            message: "An order cannot be deleted unless it is pending."
+        });
+    };
+}
 
 //API handler functions
 //list - lists all orders
@@ -143,11 +153,17 @@ function read(req, res){
 
 //update - updates order
 function update(req, res, next){
-    let { data: { id, deliverTo, mobileNumber, status, dishes  } = {} } = req.body;
-    const ogOrder = res.locals.order;
-    const ogDishes = ogOrder.dishes;
-    req.body.data.id = ogOrder.id;
+    const originalOrder = res.locals.order;
+    req.body.data.id = originalOrder.id;
     res.json({ data: req.body.data });
+}
+
+//destroy - removes an order as long as it is in pending status
+function destroy(req, res) {
+    const foundOrder = res.locals.order;
+    const index = orders.findIndex((order) => order.id === foundOrder.id);
+    orders.splice(index, 1);
+    res.sendStatus(204);
 }
 
 module.exports = {
@@ -164,4 +180,5 @@ module.exports = {
         statusIsValid,
         update
     ],
+    delete: [ orderExists, statusIsPending, destroy],
 }
