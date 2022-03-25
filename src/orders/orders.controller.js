@@ -153,9 +153,17 @@ function read(req, res){
 
 //update - updates order
 function update(req, res, next){
-    const originalOrder = res.locals.order;
-    req.body.data.id = originalOrder.id;
-    res.json({ data: req.body.data });
+    const { data: { id, deliverTo, mobileNumber, status, dishes } = {} } = req.body;
+    const ogOrder = res.locals.order;
+    res.json({ 
+        data: {
+            id: ogOrder.id,
+            deliverTo: deliverTo,
+            mobileNumber: mobileNumber,
+            status: status,
+            dishes: dishes 
+        }
+    });
 }
 
 //destroy - removes an order as long as it is in pending status

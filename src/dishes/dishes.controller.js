@@ -123,8 +123,15 @@ function update(req, res, next){
             message: "Fields must be changed to perform update."
         });
     } else {
-      req.body.data.id = ogDish.id;
-      res.json({ data: req.body.data });
+      res.json({ 
+          data:  {
+              id: ogDish.id,
+              name: name,
+              description: description,
+              price: price,
+              image_url: image_url
+          }
+        });
     };
 }
 
